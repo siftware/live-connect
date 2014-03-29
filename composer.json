@@ -1,0 +1,23 @@
+{
+    "name": "siftware/live-connect",
+    "description": "Consumes Microsoft's Live Connect REST API. Allows OneDrive (SkyDrive) interaction and authentication ",
+    "keywords": ["live", "connect", "SkyDrive", "OneDrive"],
+    "homepage": "http://github.com/siftware/live-connect",
+    "license": "MIT",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Darren Beale",
+            "email": "mail@bealers.com",
+            "homepage": "http://beale.rs"
+        }
+    ],
+    "require": {
+        "php": ">=5.4.0"
+    },
+     "autoload": {
+        "psr-4": {
+            "Siftware\\": "src/Siftware"
+        }
+    }
+}
