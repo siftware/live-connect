@@ -10,9 +10,9 @@ Most of the MS Live Connect examples use Javascript, [this](http://msdn.microsof
 
 see `test/example.php`
 
-Note how the auth code we get from step one is being checked for in the example. We have to look out for this only for the very first time we authenticate. So, in production it might be a better idea to have the aunthenticate conditional on a dedicated callback page and rely on the authentication check within
+Note how the auth code we get from step one is being checked for in the example. We have to look out for this only for the very first time we authenticate. So, in production it might be a better idea to have the aunthenticate conditional on a dedicated callback page and rely on the authentication check within `liveRequest()`.
 
-There is some rudimentary debugging that currently pits out to your webserver's error log, this is easily extendable.
+There is some rudimentary debugging that currently spits out to your webserver's error log, this is easily extendable.
 
 ##To Do
 
@@ -26,7 +26,7 @@ If you end up using this as a base and flesh some more of the content methods ou
 
 ##Author
 
-I'm [Darren Beale](http://beale.rs) ([@bealers](http://twitter.com/bealers)
+I'm [Darren Beale](http://beale.rs) ([@bealers](http://twitter.com/bealers))
 
 ##Credit
 
