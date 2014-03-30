@@ -60,7 +60,8 @@ class LiveConnect
     *
     * Use of this method is optional if you *know* that you have a valid refresh token.
     * It may be more useful at bootstrapping stage but on subsequent requests
-    * the liveRequest() method will also check the token expiry & refresh if needed
+    * $this->getAccessToken() method (that you pass into the request) will also
+    * check token expiry & refresh if needed
 \    */
     public function authenticate($code = "")
     {
@@ -171,55 +172,6 @@ class LiveConnect
             return false;
         }
     }
-
-//    /**
-//    * @param string $url
-//    * @param string $method
-//    * @param array $params
-//    *
-//    * @return mixed, object on success false on failure
-//    *
-//    * @TODO this needs to cater for POST/PUT/DELETE etc
-//    */
-//    public function liveRequest($url, $method = 'GET', $params = array())
-//    {
-//        // check that the token hasn't now expired
-//        $accessToken = $this->getAccessToken();
-//        if (!$accessToken) return false;
-//
-//        $requestUrl = $url .'?'. http_build_query($params);
-//
-//        Logger::debug("Making Live Connect request: " . $requestUrl);
-//
-//        $ch = curl_init($requestUrl);
-//
-//        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-//        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-//        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
-//        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Authorization: Bearer ' . $accessToken));
-//
-//        try{
-//            $response = curl_exec($ch);
-//        }
-//        catch (Exception $e)
-//        {
-//            Logger::error("Error connecting to Live Connect: " . $e->message . "(" . $e->code . ")");
-//            return false;
-//        }
-//
-//        $responseJson = json_decode($response);
-//
-//        if(is_object($responseJson) && property_exists($responseJson, 'error'))
-//        {
-//            Logger::error("Error during Live Connect request: " .
-//                $responseJson->error . ' : ' . $responseJson->error_description);
-//
-//            return false;
-//
-//        } else {
-//            return $responseJson;
-//        }
-//    }
 
     /**
     * Grab the access token, but authenticate first, useful for requests

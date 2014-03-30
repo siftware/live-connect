@@ -41,6 +41,9 @@ Create this file called `test/example.php`
 
 ```php
 <?php
+
+// -- Bootstrapping. Put me in an include file
+
 /**
 * Get these from https://account.live.com/developers/applications
 */
@@ -74,9 +77,9 @@ $live->setScopes("wl.offline_access,wl.signin,wl.basic,office.onenote_create");
 
 // This conditional is only needed when the request is for a new user.
 // In production, catering for step 1 of the OAuth process (getting an auth code)
-// could be all handled on the callback page.
-//
-// The rest of the time just use $this->getAuthToken() which will also handle auth/refresh for you
+// could be all handled on the callback page and the rest of the time just use
+// $this->getAuthToken() which handles auth/refresh for you
+
 $authCode = (isset($_GET["code"]) ? $_GET["code"] : "");
 if (!$live->authenticate($authCode))
 {
@@ -91,9 +94,7 @@ else
 }
 ```
 
-Note how the auth code we get from step one is being checked for in the example. We have to look out for this only for the very first time we authenticate. So, in production it might be a better idea to have the aunthenticate conditional on a dedicated callback page and rely on the authentication check within `liveRequest()`.
-
-There is some rudimentary debugging that currently spits out to your webserver's error log, this is easily extendable.
+As per the inline comments, note how the auth code we get from step one is being checked for in the example. We have to look out for this only for the very first time we authenticate. So, in production it might be a better idea to have the aunthenticate conditional on a dedicated callback page and rely on the authentication check within `liveRequest()`.
 
 ##To Do
 
