@@ -6,6 +6,28 @@ Uses OAuth 2.0 authorization code grant flow as [documented here](http://msdn.mi
 
 Most of the MS Live Connect examples use Javascript, [this](http://msdn.microsoft.com/en-us/library/live/hh243649.aspx) is the best resource I found for a general explanation of the Live Connect auth process on the server side.
 
+##Install
+
+Use Composer.
+
+    cd && mkdir project-root && cd project-root
+    echo "
+    {
+        "require": {
+            "siftware/live-connect": "dev-master"
+        },
+        "autoload": {
+            "psr-4": {
+                "Siftware\\": "src/Siftware"
+            }
+        }
+    }" > composer.json
+
+    curl -s http://getcomposer.org/installer | php
+    php composer.phar install
+    ./composer install
+
+
 ##Usage
 
 see `test/example.php`
