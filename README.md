@@ -84,6 +84,8 @@ I built this so I could start interacting with the OneNote API. So for now the o
 
 It will be relatively trivial to implement quite a bit of the content retreival endpoints, for POST/PUT & DELETE more work will be needed.
 
+Use Guzzle for API consumption?
+
 *Testing* needed.
 
 If you end up using this as a base and flesh some more of the content methods out feel free to submit a pull request.

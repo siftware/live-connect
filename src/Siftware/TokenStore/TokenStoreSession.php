@@ -12,19 +12,25 @@
 
 namespace Siftware\TokenStore;
 
-class TokenStoreFile extends TokenStore
+class TokenStoreSession extends TokenStore
 {
-    private $tokenStoreLocation;
+    private $tokenStoreSessionVar;
 
     public function __construct()
     {
-        // this might not work for you, if so use the setter
-        $this->tokenStoreLocation = "/tmp/swLiveTokens";
+        session_start();
+
+        $this->tokenStoreSessionVar = "swLiveConnect";
+
     }
 
     public function getTokens()
     {
-        return json_decode(file_get_contents($this->tokenStoreLocation), true);
+        if (!isset($_SESSION[$this->tokenStoreSessionVar]))
+        {
+            $_SESSION[$this->tokenStoreSessionVar] = array();
+        }
+        return $_SESSION[$this->tokenStoreSessionVar];
     }
 
     // --
@@ -37,7 +43,8 @@ class TokenStoreFile extends TokenStore
             'token_expires' => (time() + (int) $tokens->expires_in)
         );
 
-        if (file_put_contents($this->tokenStoreLocation, json_encode($saveTokens))) {
+        $_SESSION[$this->tokenStoreSessionVar] = $saveTokens;
+        if (is_array($_SESSION[$this->tokenStoreSessionVar])) {
             return true;
         } else {
             return false;
@@ -48,7 +55,8 @@ class TokenStoreFile extends TokenStore
 
     public function deleteTokens()
     {
-        if (file_put_contents($this->tokenStoreLocation, "--")) {
+        unset($_SESSION[$this->tokenStoreSessionVar]);
+        if (!isset($_SESSION[$this->tokenStoreSessionVar])) {
             return true;
         } else {
             return false;
@@ -57,12 +65,10 @@ class TokenStoreFile extends TokenStore
     }
 
     /**
-    * Override the default storage location
-    *
-    * @param string path $store
+    * @param string path $storeName
     */
-    public function setTokenStore($store)
+    public function setTokenStoreSessionVarName($storeName)
     {
-        $this->tokenStoreLocation = $store;
+        $this->tokenStoreSessionVar = $storeName;
     }
 }

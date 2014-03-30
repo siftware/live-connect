@@ -51,7 +51,7 @@ class LiveConnect
 
         $this->debug        = false;
 
-        $this->tokenStore   = TokenStoreFactory::build("File");
+        $this->tokenStore   = TokenStoreFactory::build();
     }
 
     /**

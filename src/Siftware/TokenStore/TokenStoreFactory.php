@@ -14,14 +14,20 @@ namespace Siftware\TokenStore;
 
 class TokenStoreFactory
 {
-    public static function build($storeType)
+    public static function build($storeType = null)
     {
         switch ($storeType) {
             case 'File':
                 return new TokenStoreFile();
                 break;
+
+            case 'Session':
+                return new TokenStoreSession();
+                break;
+
+            default:
+                return new TokenStoreSession();
+                break;
         }
-
-
     }
 }

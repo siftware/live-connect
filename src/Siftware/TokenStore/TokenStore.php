@@ -14,12 +14,11 @@ namespace Siftware\TokenStore;
 
 /**
 * Extend me
-*
-* @TODO make this concrete and use sessions by default?
 */
 abstract class TokenStore
 {
     public function __construct() {}
+
     public function getTokens() {}
     public function saveTokens() {}
     public function deleteTokens() {}
