@@ -13,6 +13,8 @@
 namespace Siftware;
 
 use Siftware\TokenStore\TokenStoreFactory;
+use Siftware\Logger;
+use Siftware\LiveRequest;
 
 /**
 * PHP wrapper to Microsoft's Live Connect API
@@ -49,8 +51,6 @@ class LiveConnect
         // wl.offline also gives us access to the refresh token
         $this->scopes       = "wl.offline_access,wl.signin,wl.basic";
 
-        $this->debug        = false;
-
         $this->tokenStore   = TokenStoreFactory::build();
     }
 
@@ -69,7 +69,7 @@ class LiveConnect
         {
             $expiry = $storedTokens['token_expires'];
 
-            if ($this->debug) $this->logger("Retrieved tokens from store, expiry: " . $expiry);
+            Logger::debug("Retrieved tokens from store, expiry: " . $expiry);
 
             // do we need a refresh?
             if (time() > (int) $expiry) {
@@ -83,7 +83,7 @@ class LiveConnect
 
         } else {
 
-            if ($this->debug) $this->logger("No auth tokens stored");
+            Logger::debug("No auth tokens stored");
 
             if ($code === "") {
 
@@ -94,7 +94,7 @@ class LiveConnect
                     "&scope=" . $this->scopes .
                     "&redirect_uri=" . urlencode($this->redirectUrl);
 
-                if ($this->debug) $this->logger("Requesting an auth code to URL: " . $liveAuthUrl);
+                Logger::debug("Requesting an auth code to URL: " . $liveAuthUrl);
 
                 header("Location: " . $liveAuthUrl);
 
@@ -109,12 +109,12 @@ class LiveConnect
         {
             if (is_object($authTokens) && $this->tokenStore->saveTokens($authTokens)) {
 
-                if ($this->debug) $this->logger("Saving tokens");
+                Logger::debug("Saving tokens");
                 return true;
 
             } else {
 
-                $this->logger("Problem storing tokens");
+                Logger::error("Problem storing tokens");
             }
         }
 
@@ -126,16 +126,7 @@ class LiveConnect
 
     public function getLiveTokens($key, $refresh = false)
     {
-        $authUrl = "https://login.live.com";
-
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $authUrl . "/oauth20_token.srf");
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-            'Content-Type: application/x-www-form-urlencoded',
-        ));
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        $authUrl = "https://login.live.com/oauth20_token.srf";
 
         $payload = array(
             "client_id"     => $this->liveId,
@@ -154,26 +145,14 @@ class LiveConnect
             $payload["grant_type"] = "authorization_code";
         }
 
-        if ($this->debug) {
+        $client = new LiveRequest($authUrl);
 
-            $this->logger("Attempting to retrieve (" . ($refresh ? "Refresh" : "New") .
-                ") authorisation_token from Live Connect, payload: " .
-                http_build_query($payload));
-        }
+        Logger::debug("Attempting to retrieve (" .
+                        ($refresh ? "Refresh" : "New") .
+                        ") authorisation_token from Live Connect, payload: " .
+                        http_build_query($payload));
 
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($payload));
-
-        try {
-
-            $response = curl_exec($ch);
-
-        } catch (Exception $e) {
-
-            $this->logger("Error connecting to Live Connect: " .
-                $e->message . "(" . $e->code . ")");
-            return false;
-        }
-
+        $response = $client->post($payload);
         $responseJson = json_decode($response);
 
         if (is_object($responseJson) && property_exists($responseJson, 'access_token'))
@@ -182,70 +161,70 @@ class LiveConnect
         }
         elseif(is_object($responseJson) && property_exists($responseJson, 'error'))
         {
-            $this->logger("Error getting access token from Live Connect: " .
+            Logger::error("Error getting access token from Live Connect: " .
                 $responseJson->error . ' : ' . $responseJson->error_description);
 
             return false;
 
         } else {
-            $this->logger("Unknown error getting access token from Live Connect, invalid payload?");
+            Logger::error("Unknown Error");
             return false;
         }
     }
 
-    /**
-    * @param string $url
-    * @param string $method
-    * @param array $params
-    *
-    * @return mixed, object on success false on failure
-    *
-    * @TODO this needs to cater for POST/PUT/DELETE etc
-    */
-    public function liveRequest($url, $method = 'GET', $params = array())
-    {
-        // check that the token hasn't now expired
-        $accessToken = $this->getAccessToken();
-        if (!$accessToken) return false;
-
-        $requestUrl = $url .'?'. http_build_query($params);
-
-        if ($this->debug) $this->logger("Making Live Connect request: " . $requestUrl);
-
-        $ch = curl_init($requestUrl);
-
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Authorization: Bearer ' . $accessToken));
-
-        try{
-            $response = curl_exec($ch);
-        }
-        catch (Exception $e)
-        {
-            $this->logger("Error connecting to Live Connect: " . $e->message . "(" . $e->code . ")");
-            return false;
-        }
-
-        $responseJson = json_decode($response);
-
-        if(is_object($responseJson) && property_exists($responseJson, 'error'))
-        {
-            $this->logger("Error during Live Connect request: " .
-                $responseJson->error . ' : ' . $responseJson->error_description);
-
-            return false;
-
-        } else {
-            return $responseJson;
-        }
-    }
+//    /**
+//    * @param string $url
+//    * @param string $method
+//    * @param array $params
+//    *
+//    * @return mixed, object on success false on failure
+//    *
+//    * @TODO this needs to cater for POST/PUT/DELETE etc
+//    */
+//    public function liveRequest($url, $method = 'GET', $params = array())
+//    {
+//        // check that the token hasn't now expired
+//        $accessToken = $this->getAccessToken();
+//        if (!$accessToken) return false;
+//
+//        $requestUrl = $url .'?'. http_build_query($params);
+//
+//        Logger::debug("Making Live Connect request: " . $requestUrl);
+//
+//        $ch = curl_init($requestUrl);
+//
+//        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+//        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+//        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
+//        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Authorization: Bearer ' . $accessToken));
+//
+//        try{
+//            $response = curl_exec($ch);
+//        }
+//        catch (Exception $e)
+//        {
+//            Logger::error("Error connecting to Live Connect: " . $e->message . "(" . $e->code . ")");
+//            return false;
+//        }
+//
+//        $responseJson = json_decode($response);
+//
+//        if(is_object($responseJson) && property_exists($responseJson, 'error'))
+//        {
+//            Logger::error("Error during Live Connect request: " .
+//                $responseJson->error . ' : ' . $responseJson->error_description);
+//
+//            return false;
+//
+//        } else {
+//            return $responseJson;
+//        }
+//    }
 
     /**
     * Grab the access token, but authenticate first, useful for requests
     */
-    private function getAccessToken()
+    public function getAccessToken()
     {
         if ($this->authenticate()) {
             $authTokens = $this->tokenStore->getTokens();
@@ -257,42 +236,18 @@ class LiveConnect
         }
     }
 
-    // --
-
-    /**
-    * Very basic logging
-    *
-    * @TODO introduce dependency of Monolog
-    */
-    private function logger($string)
-    {
-        // not sure if this is strictly necessary
-        try {
-            error_log($string);
-        }
-        catch (Exception $e)
-        {
-            die("Unable to call PHP's error_log() function");
-        }
-    }
-
     // -- basic getters & setters
 
     /**
-    * comma separated string of Live Connect scopes
+    * See here for a full lsit of scopes and what they are used for:
+    * http://msdn.microsoft.com/en-us/library/live/hh243646.aspx
     *
+    * @todo allow adding via array and also add remove single scopes
     * @param string $scopes
     */
     public function setScopes($scopes)
     {
         $this->scopes = $scopes;
-    }
-
-    // --
-
-    public function setDebug($debug)
-    {
-        $this->debug = $debug;
     }
 
     // -- Basic API interaction, post authentication
@@ -303,7 +258,9 @@ class LiveConnect
     */
     public function getProfile($guid = 'me')
     {
-        return $this->liveRequest('https://apis.live.net/v5.0/' . $guid, 'GET');
+        $client = new LiveRequest("https://apis.live.net/v5.0/" . $guid, $this->getAccessToken());
+
+        return $client->get();
     }
 
     /**
@@ -312,7 +269,8 @@ class LiveConnect
     */
     public function getContacts($guid = 'me', $params = array())
     {
-        return $this->liveRequest('https://apis.live.net/v5.0/' . $guid . '/contacts', 'GET', $params);
-    }
+        $client = new LiveRequest("https://apis.live.net/v5.0/" . $guid . "/contacts", $this->getAccessToken());
 
+        return $client->get();
+    }
 }
