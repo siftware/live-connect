@@ -86,7 +86,6 @@ class LiveRequest
 
                 // the error message from Live Connect
                 $json = json_decode($response->getBody());
-                print_r($json);
 
                 if (property_exists($json, 'error_description')) {
 
