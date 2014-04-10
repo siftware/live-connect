@@ -15,7 +15,8 @@
     "require": {
         "php": ">=5.4.0",
         "guzzlehttp/guzzle": "~4.0",
-        "monolog/monolog": "1.7.*"
+        "monolog/monolog": "1.7.*",
+        "guzzle/plugin-log": "3.7.*@dev"
     },
      "autoload": {
         "psr-4": {

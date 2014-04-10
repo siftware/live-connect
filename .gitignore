@@ -1,6 +1,5 @@
 composer
 /vendor/
 /test/secret.php
-/test/hide.php
 composer.lock
 live-connect.log

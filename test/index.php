@@ -10,8 +10,12 @@
  * file that was distributed with this source code.
  */
 
-/**
-* Get these from https://account.live.com/developers/applications
-*/
-define("LC_CLIENT_ID", "<put yours here>");
-define("LC_CLIENT_SECRET", "<put yours here>");
+require __DIR__ . "/bootstrap.php";
+
+
+print "<pre>";
+
+print_r(json_decode($liveConnect->getProfile()));
+print_r(json_decode($liveConnect->getContacts()));
+
+print "</pre>";

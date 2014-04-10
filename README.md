@@ -1,4 +1,4 @@
-#siftware/live-connect
+# siftware/live-connect
 
 A PHP package that consumes Microsoft's Live Connect REST API allowing OneDrive (SkyDrive) interaction and authentication.
 
@@ -6,7 +6,7 @@ Uses OAuth 2.0 authorization code grant flow as [documented here](http://msdn.mi
 
 Most of the MS Live Connect examples use Javascript, [this](http://msdn.microsoft.com/en-us/library/live/hh243649.aspx) is the best resource I found for a general explanation of the Live Connect auth process on the server side.
 
-##Install
+## Install
 
 Use Composer.
 
@@ -35,63 +35,96 @@ Grab the library
     ./composer install
 
 
-##Usage
+## Usage
 
-Create this file called `test/example.php`
+`test/bootstrap.php`
 
 ```php
 <?php
 
-// -- Bootstrapping. Put me in an include file
-
 /**
 * Get these from https://account.live.com/developers/applications
 */
-define("LIVE_CLIENT_ID", "<put yours here>");
-define("LIVE_CLIENT_SECRET", "<put yours here>");
+define("LC_CLIENT_ID", "<put yours here>");
+define("LC_CLIENT_SECRET", "<put yours here>");
 
-define ("LC_LOG_CHANNEL", "live-connect");
-
-// this should write to your project root (from the test directory)
-define ("LC_LOG_PATH", __DIR__ . "/../");
-define ("LC_LOG_NAME", "live-connect.log");
-
-//Useful debugging output, by default to a file (uses Monolog)
-//Exceptions also go to the same place
-define ("LC_DEBUG", true);
-
-define("LIVE_CALLBACK_URL", "http://live-connect.dev/example.php");
+define("LC_CALLBACK_URL", "http://live-connect.dev/callback.php");
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use Siftware\LiveConnect;
-use Siftware\LiveRequest;
+use Siftware\Logger;
 
-$live = new LiveConnect(LIVE_CLIENT_ID, LIVE_CLIENT_SECRET, LIVE_CALLBACK_URL);
+/**
+* PSR-3 compatible logger. Logs to file,  if you want to disable logging then just
+* pass false as second paramter. See the class interface for more options.
+* You can of course ditch this and pass in your own PS3-R logger instance
+*/
+$logger = new Logger(Psr\Log\LogLevel::DEBUG);
 
-//See here for a full list of scopes and what they are used for:
-//http://msdn.microsoft.com/en-us/library/live/hh243646.aspx
-$live->setScopes("wl.offline_access,wl.signin,wl.basic,office.onenote_create");
+$liveConnect = new LiveConnect(LC_CLIENT_ID, LC_CLIENT_SECRET, LC_CALLBACK_URL, $logger);
 
-// -- /end Bootstrapping
+/**
+* See here for a full list of scopes and what they are used for:
+* http://msdn.microsoft.com/en-us/library/live/hh243646.aspx
+*/
+$liveConnect->setScopes("wl.offline_access, wl.signin, wl.basic");
+```
 
-// This conditional is only needed when the request is for a new user.
-// In production, catering for step 1 of the OAuth process (getting an auth code)
-// could be all handled on the callback page and the rest of the time just use
-// $this->getAuthToken() which handles auth/refresh for you
+`test/callback.php`
+
+```php
+<?php
+
+require __DIR__ . "/bootstrap.php";
+
+/**
+* If Live Connect doesn't recognise the source of the request, (because no
+* credentials are presented) the OAuth process is kicked off.
+*
+* Stage 1 is to ask the user to accept the connection then redirect to the callback
+* URL (which is specified when signing up with Live Connect for the app) with the
+* auth code in the query string. This is that callback URL.
+*
+* The authenticate() method below is OAuth stage 2. It passes the auth code back
+* to Live Connect and hopefully receives both an authentication token and also a
+* refresh token (as well as a token expiry date), the initiating user shouldn't
+* need to visit here again unless:
+*
+* 1) they manually de-authorise your app
+* 2) the tokens are no longer available
+* 3) new scopes are needed
+*/
 
 $authCode = (isset($_GET["code"]) ? $_GET["code"] : "");
-if (!$live->authenticate($authCode))
+
+if (!$liveConnect->authenticate($authCode))
 {
     print "Unable to authenticate against Live Connect";
+
+    // clearly you'll want to handle this differently
+    exit;
 }
 else
 {
-    print "<pre>";
-    print_r(json_decode($live->getProfile()));
-    print_r(json_decode($live->getContacts()));
-    print "</pre>";
+    // all good
+    header("Location: /");
 }
+```
+
+`test/index.php`
+
+```php
+<?php
+
+require __DIR__ . "/bootstrap.php";
+
+print "<pre>";
+
+print_r(json_decode($liveConnect->getProfile()));
+print_r(json_decode($liveConnect->getContacts()));
+
+print "</pre>";
 ```
 
 As per the inline comments, note how the auth code we get from step one is being checked for in the example. We have to look out for this only for the very first time we authenticate. So, in production it might be a better idea to have the aunthenticate conditional on a dedicated callback page and rely on the authentication check within `liveRequest()`.

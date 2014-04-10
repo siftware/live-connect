@@ -12,14 +12,9 @@
 
 namespace Siftware\TokenStore;
 
-/**
-* Extend me
-*/
-abstract class TokenStore
+Interface TokenStore
 {
-    public function __construct() {}
-
-    public function getTokens() {}
-    public function saveTokens() {}
-    public function deleteTokens() {}
+    public function getTokens();
+    public function saveTokens($tokens);
+    public function deleteTokens();
 }

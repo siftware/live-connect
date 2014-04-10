@@ -12,7 +12,7 @@
 
 namespace Siftware\TokenStore;
 
-class TokenStoreSession extends TokenStore
+class TokenStoreSession implements TokenStore
 {
     private $tokenStoreSessionVar;
 

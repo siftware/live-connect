@@ -12,7 +12,7 @@
 
 namespace Siftware\TokenStore;
 
-class TokenStoreFile extends TokenStore
+class TokenStoreFile implements TokenStore
 {
     private $tokenStoreLocation;
 

@@ -13,6 +13,7 @@
 namespace Siftware;
 
 use GuzzleHttp\Client;
+use Psr\Log\LoggerInterface;
 
 /**
 * Wrapper to GuzzleHttp\Client
@@ -26,7 +27,10 @@ class LiveRequest
 
     private $defaultHeaders;
 
-    public function __construct($endpoint, $authToken = null)
+    private $logger;
+
+    public function __construct($endpoint, LoggerInterface $logger,
+        $authToken = null)
     {
         $this->endpoint     = $endpoint;
 
@@ -34,10 +38,20 @@ class LiveRequest
 
         $this->client       = new Client();
 
+        $this->logger       = $logger;
+
         $this->defaultHeaders = array(
             'User-Agent' => 'PHP - https://github.com/siftware/live-connect'
         );
 
+        $this->extraHeaders = array();
+    }
+
+    // --
+
+    public function setDebug(bool $debug)
+    {
+        $this->client->setDefaultOption('debug', $debug);
     }
 
     // --
@@ -70,36 +84,43 @@ class LiveRequest
 
     /**
     * @return \GuzzleHttp\Message\ResponseInterface
-    * @todo improve exception handling
+    * @todo improve exception handling, return response and allow clients to handle internally
     */
     private function send($request)
     {
-        Logger::debug($request);
+        $this->logger->debug($request);
 
         try {
             $response = $this->client->send($request);
         } catch (\Exception $e) {
+
             if ($e->hasResponse()) {
 
                 $response = $e->getResponse();
-                Logger::error($response->getStatusCode() . ": " . $response->getReasonPhrase());
+                $this->logger->error($response->getStatusCode() . ": " . $response->getReasonPhrase());
 
-                // the error message from Live Connect
-                $json = json_decode($response->getBody());
+                $body = $response->getBody();
 
-                if (property_exists($json, 'error_description')) {
+                if ($body != "")
+                {
+                     // the error message from Live Connect
+                    $json = json_decode($response->getBody());
 
-                    Logger::debug($json->error_description);
-                } elseif (property_exists($json, 'error')) {
+                    if (property_exists($json, 'error_description')) {
 
-                    Logger::debug($json->error->message);
-                } else {
+                        $this->logger->debug($json->error_description);
+                    } elseif (property_exists($json, 'error')) {
 
-                    Logger::debug("Unknown error when communicating with Live Connect");
+                        $this->logger->debug($json->error->message);
+                    } else {
+
+                        $this->logger->debug("Unknown error when communicating with Live Connect");
+                    }
                 }
+
             } else {
 
-                Logger::error("Unknown error when communicating with Live Connect");
+                $this->logger->error("Unknown error when communicating with Live Connect");
             }
 
             return false;
@@ -123,6 +144,11 @@ class LiveRequest
         foreach ($this->defaultHeaders as $header => $value) {
             $request->setHeader($header, $value);
         }
+
+        foreach ($this->extraHeaders as $header => $value) {
+            $request->setHeader($header, $value);
+        }
+
     }
 
 }

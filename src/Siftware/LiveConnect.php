@@ -15,6 +15,7 @@ namespace Siftware;
 use Siftware\TokenStore\TokenStoreFactory;
 use Siftware\Logger;
 use Siftware\LiveRequest;
+use Psr\Log\LoggerInterface;
 
 /**
 * PHP wrapper to Microsoft's Live Connect API
@@ -38,11 +39,19 @@ class LiveConnect
     protected $token;
     protected $scopes;
 
-    public $debug;
+    protected $logger;
 
-    // --
-
-    public function __construct($liveId, $liveSecret, $redirectUrl)
+    /**
+    * @param mixed $liveId
+    * @param mixed $liveSecret
+    * @param mixed $redirectUrl
+    * @param LoggerInterface $logger
+    * @param mixed $store [File|Session (default)]
+    *
+    * @return LiveConnect
+    */
+    public function __construct($liveId, $liveSecret, $redirectUrl,
+        LoggerInterface $logger, $store = "Session")
     {
         $this->liveId       = $liveId;
         $this->liveSecret   = $liveSecret;
@@ -51,7 +60,21 @@ class LiveConnect
         // wl.offline also gives us access to the refresh token
         $this->scopes       = "wl.offline_access,wl.signin,wl.basic";
 
-        $this->tokenStore   = TokenStoreFactory::build();
+        $this->logger       = $logger;
+
+        $this->tokenStore   = TokenStoreFactory::build($store);
+    }
+
+    // --
+
+    /**
+    * This allows you to roll your own Token Store, just implement Siftware\TokenStore
+    *
+    * @param TokenStore $store
+    */
+    public function setStore(TokenStore $store)
+    {
+        $this->tokenStore = $store;
     }
 
     /**
@@ -59,8 +82,8 @@ class LiveConnect
     * or refresh an expired token and add the new one to the store
     *
     * Use of this method is optional if you *know* that you have a valid refresh token.
-    * It may be more useful at bootstrapping stage but on subsequent requests
-    * $this->getAccessToken() method (that you pass into the request) will also
+    * It may be more useful at bootstrapping stage, on subsequent requests
+    * $this->getAccessToken() method (that you'll need pass into the request) will also
     * check token expiry & refresh if needed
 \    */
     public function authenticate($code = "")
@@ -70,7 +93,7 @@ class LiveConnect
         {
             $expiry = $storedTokens['token_expires'];
 
-            Logger::debug("Retrieved tokens from store, expiry: " . $expiry);
+            $this->logger->debug("Retrieved tokens from store, expiry: " . $expiry);
 
             // do we need a refresh?
             if (time() > (int) $expiry) {
@@ -84,7 +107,7 @@ class LiveConnect
 
         } else {
 
-            Logger::debug("No auth tokens stored");
+            $this->logger->debug("No auth tokens stored");
 
             if ($code === "") {
 
@@ -95,7 +118,7 @@ class LiveConnect
                     "&scope=" . $this->scopes .
                     "&redirect_uri=" . urlencode($this->redirectUrl);
 
-                Logger::debug("Requesting an auth code to URL: " . $liveAuthUrl);
+                $this->logger->debug("Requesting an auth code to URL: " . $liveAuthUrl);
 
                 header("Location: " . $liveAuthUrl);
 
@@ -110,12 +133,12 @@ class LiveConnect
         {
             if (is_object($authTokens) && $this->tokenStore->saveTokens($authTokens)) {
 
-                Logger::debug("Saving tokens");
+                $this->logger->debug("Saving tokens");
                 return true;
 
             } else {
 
-                Logger::error("Problem storing tokens");
+                $this->logger->error("Problem storing tokens");
             }
         }
 
@@ -146,9 +169,9 @@ class LiveConnect
             $payload["grant_type"] = "authorization_code";
         }
 
-        $client = new LiveRequest($authUrl);
+        $client = new LiveRequest($authUrl, $this->logger);
 
-        Logger::debug("Attempting to retrieve (" .
+        $this->logger->debug("Attempting to retrieve (" .
                         ($refresh ? "Refresh" : "New") .
                         ") authorisation_token from Live Connect, payload: " .
                         http_build_query($payload));
@@ -162,13 +185,13 @@ class LiveConnect
         }
         elseif(is_object($responseJson) && property_exists($responseJson, 'error'))
         {
-            Logger::error("Error getting access token from Live Connect: " .
+            $this->logger->error("Error getting access token from Live Connect: " .
                 $responseJson->error . ' : ' . $responseJson->error_description);
 
             return false;
 
         } else {
-            Logger::error("Unknown Error");
+            $this->logger->error("Unknown Error");
             return false;
         }
     }
@@ -202,7 +225,7 @@ class LiveConnect
         $this->scopes = $scopes;
     }
 
-    // -- Basic API interaction, post authentication
+    // -- Basic API interaction, post authentication, example only
 
     /**
     * @param string $guid
@@ -210,7 +233,8 @@ class LiveConnect
     */
     public function getProfile($guid = 'me')
     {
-        $client = new LiveRequest("https://apis.live.net/v5.0/" . $guid, $this->getAccessToken());
+        $client = new LiveRequest("https://apis.live.net/v5.0/" . $guid,
+            $this->logger, $this->getAccessToken());
 
         return $client->get();
     }
@@ -221,7 +245,8 @@ class LiveConnect
     */
     public function getContacts($guid = 'me', $params = array())
     {
-        $client = new LiveRequest("https://apis.live.net/v5.0/" . $guid . "/contacts", $this->getAccessToken());
+        $client = new LiveRequest("https://apis.live.net/v5.0/" . $guid . "/contacts",
+            $this->logger, $this->getAccessToken());
 
         return $client->get();
     }
