@@ -57,7 +57,7 @@ use Siftware\Logger;
 
 /**
 * PSR-3 compatible logger. Logs to file,  if you want to disable logging then just
-* pass false as second paramter. See the class interface for more options.
+* pass false as second parameter. See the class interface for more options.
 * You can of course ditch this and pass in your own PS3-R logger instance
 */
 $logger = new Logger(Psr\Log\LogLevel::DEBUG);
@@ -127,9 +127,7 @@ print_r(json_decode($liveConnect->getContacts()));
 print "</pre>";
 ```
 
-As per the inline comments, note how the auth code we get from step one is being checked for in the example. We have to look out for this only for the very first time we authenticate. So, in production it might be a better idea to have the aunthenticate conditional on a dedicated callback page and rely on the authentication check within `liveRequest()`.
-
-##To Do
+## To Do
 
 I built this so I could start interacting with the OneNote API. So for now the only thing compelete is Authentication.
 
@@ -137,19 +135,19 @@ It will be relatively trivial to implement quite a few of the content retreival 
 
 *Testing* needed.
 
-If you end up using this as a base and flesh some more of the content methods out feel free to submit a pull request.
+If you end up using this as a base and flesh some more of the content methods out, feel free to submit a pull request.
 
-##Author
+## Author
 
 I'm [Darren Beale](http://beale.rs) ([@bealers](http://twitter.com/bealers))
 
-##Credit
+## Credit
 
  There are a couple of other OneDrive/LiveConnect classes that I have borrowed ideas from:
 
   - [Anuradha Jayathilaka's live-api-php-class](https://github.com/astroanu/live-api-php-class) which I couldn't get working
   - [Jonathan Lovatt's php-skydrive] (https://github.com/lovattj/php-skydrive) which I didn't try to get working but I did nick the TokenStore idea from
 
-##Licence
+## Licence
 
  This package is released under the [MIT Licence](http://opensource.org/licenses/MIT)
