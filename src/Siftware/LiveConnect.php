@@ -225,7 +225,7 @@ class LiveConnect
         $this->scopes = $scopes;
     }
 
-    // -- Basic API interaction, post authentication, example only
+    // -- Basic API interaction, post authentication, supplied as example only
 
     /**
     * @param string $guid
@@ -235,7 +235,7 @@ class LiveConnect
     {
         $client = new LiveRequest("https://apis.live.net/v5.0/" . $guid,
             $this->logger, $this->getAccessToken());
-
+        
         return $client->get();
     }
 
@@ -247,7 +247,7 @@ class LiveConnect
     {
         $client = new LiveRequest("https://apis.live.net/v5.0/" . $guid . "/contacts",
             $this->logger, $this->getAccessToken());
-
+        
         return $client->get();
     }
 }

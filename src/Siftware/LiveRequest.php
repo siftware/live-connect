@@ -15,6 +15,10 @@ namespace Siftware;
 use GuzzleHttp\Client;
 use Psr\Log\LoggerInterface;
 
+use GuzzleHttp\Subscriber\Log\LogSubscriber;
+use GuzzleHttp\Subscriber\Log\Formatter;
+
+
 /**
 * Wrapper to GuzzleHttp\Client
 */
@@ -33,12 +37,12 @@ class LiveRequest
         $authToken = null)
     {
         $this->endpoint     = $endpoint;
-
+        
         $this->authToken    = $authToken;
 
-        $this->client       = new Client();
-
         $this->logger       = $logger;
+             
+        $this->client       = new Client();
 
         $this->defaultHeaders = array(
             'User-Agent' => 'PHP - https://github.com/siftware/live-connect'
@@ -49,13 +53,20 @@ class LiveRequest
 
     // --
 
-    public function setDebug(bool $debug)
+    public function setDebug($debug = false)
     {
-        $this->client->setDefaultOption('debug', $debug);
+        if ($debug)
+        {
+            /**
+            * @see https://github.com/guzzle/log-subscriber
+            */
+            $subscriber = new LogSubscriber($this->logger, Formatter::DEBUG);
+            $this->client->getEmitter()->attach($subscriber);
+        }
     }
 
     // --
-
+    
     public function post($payLoad = array())
     {
         $request = $this->client->createRequest("POST", $this->endpoint);
@@ -88,8 +99,6 @@ class LiveRequest
     */
     private function send($request)
     {
-        $this->logger->debug($request);
-
         try {
             $response = $this->client->send($request);
         } catch (\Exception $e) {

@@ -18,3 +18,7 @@ Note: Until there's a decent chunk of the API impelmented there won't be a relea
         TokenStore now has a default
         Ability to supply custom TokenStorage class
         PSR-3 compatible logging
+
+ - 11/04/2014
+        
+        Debugging added to LiveRequest

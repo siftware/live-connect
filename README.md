@@ -129,7 +129,7 @@ print "</pre>";
 
 ## To Do
 
-I built this so I could start interacting with the OneNote API. So for now the only thing compelete is Authentication.
+I built this so I could start interacting with the OneNote API. So for now the only thing complete is authentication.
 
 It will be relatively trivial to implement quite a few of the content retreival endpoints now, 2 have been supplied.
 
