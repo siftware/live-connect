@@ -85,7 +85,7 @@ class LiveConnect
     * It may be more useful at bootstrapping stage, on subsequent requests
     * $this->getAccessToken() method (that you'll need pass into the request) will also
     * check token expiry & refresh if needed
-\    */
+    */
     public function authenticate($code = "")
     {
         $storedTokens = $this->tokenStore->getTokens();
