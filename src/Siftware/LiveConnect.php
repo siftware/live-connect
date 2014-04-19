@@ -72,7 +72,7 @@ class LiveConnect
     *
     * @param TokenStore $store
     */
-    public function setStore(TokenStore $store)
+    public function setStore(\Siftware\TokenStore\TokenStore $store)
     {
         $this->tokenStore = $store;
     }
