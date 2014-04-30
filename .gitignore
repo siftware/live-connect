@@ -1,5 +1,6 @@
 composer
 /vendor/
 /test/secret.php
+/test/on.php
 composer.lock
 live-connect.log

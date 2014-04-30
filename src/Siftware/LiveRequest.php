@@ -18,7 +18,6 @@ use Psr\Log\LoggerInterface;
 use GuzzleHttp\Subscriber\Log\LogSubscriber;
 use GuzzleHttp\Subscriber\Log\Formatter;
 
-
 /**
 * Wrapper to GuzzleHttp\Client
 */
@@ -45,7 +44,7 @@ class LiveRequest
         $this->client       = new Client();
 
         $this->defaultHeaders = array(
-            'User-Agent' => 'PHP - https://github.com/siftware/live-connect'
+            'User-Agent' => 'https://github.com/siftware/live-connect'
         );
 
         $this->extraHeaders = array();
@@ -67,20 +66,33 @@ class LiveRequest
 
     // --
     
-    public function post($payLoad = array())
+    public function post($fields = array(), $files = array())
     {
+
         $request = $this->client->createRequest("POST", $this->endpoint);
 
         $this->setDefaultHeaders($request);
 
         $postBody = $request->getBody();
 
-        foreach ($payLoad as $key => $value) {
+        // standard post fields
+        foreach ($fields as $key => $value) {
             $postBody->setField($key, $value);
         }
 
+        // multipart files, uses Guzzle 4.0 PostFile
+        foreach ($files as $file) {
+
+            if (is_a($file, 'GuzzleHttp\Post\PostFile')) {
+                $postBody->addFile($file);    
+            } else {
+                // handle me better
+                $this->logger->error("File ignored, not of type GuzzleHttp\Post\PostFile");
+            }
+        }
         return $this->send($request);
     }
+
 
     // --
 

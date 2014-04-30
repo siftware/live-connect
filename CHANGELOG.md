@@ -22,3 +22,7 @@ Note: Until there's a decent chunk of the API impelmented there won't be a relea
  - 11/04/2014
         
         Debugging added to LiveRequest
+
+- 30/04/2014
+        
+        Live request now accepts a second parameter for post files, this is an array containing 0 or more GuzzleHttp\Post\PostFile (s)
